@@ -5,38 +5,38 @@
 #include <Stepper.h>
 
 //Configuración LCD
-#define LCD_ADDR           0x27     
-#define LCD_COLS           16
-#define LCD_ROWS           2
+#define LCD_ADDR 0x27     
+#define LCD_COLS 16
+#define LCD_ROWS 2
 
 // Pines
-#define PIN_RC522_SS       10
-#define PIN_RC522_RST      9
-#define PIN_LED            6
-#define PIN_BUZZER         7
-#define PIN_BUTTON         8
+#define PIN_RC522_SS 10
+#define PIN_RC522_RST 9
+#define PIN_LED  6
+#define PIN_BUZZER 7
+#define PIN_BUTTON 8
 
 // Stepper 28BYJ-48
-#define STEPS_PER_REV      2048
+#define STEPS_PER_REV 2048
 
 Stepper stepperMotor(STEPS_PER_REV, 2, 4, 3, 5);
-#define STEPPER_RPM        12         //  (5–15)
+#define STEPPER_RPM 12         //  (5–15)
 
 // Juego
-#define MAX_PLAYERS        8     
-#define HOLD_WIN_MS        2500       // tiempo mostrando ganador en LCD
+#define MAX_PLAYERS 8     
+#define HOLD_WIN_MS 3500       // tiempo mostrando ganador en LCD
 
 // modo de juego:
-#define MODO_CONSTANTE     0
-#define MODO_REDUCCION     1
-#define GAME_MODE          MODO_CONSTANTE  
+#define MODO_CONSTANTE 0
+#define MODO_REDUCCION 1
+#define GAME_MODE MODO_CONSTANTE  
 
 // Botón
-#define BTN_DEBOUNCE_MS    50
-#define BTN_LONG_PRESS_MS  1500
+#define BTN_DEBOUNCE_MS 50
+#define BTN_LONG_PRESS_MS 1500
 
 // LED parpadeo
-#define BLINK_INTERVAL_MS  300
+#define BLINK_INTERVAL_MS 300
 
 MFRC522 rfid(PIN_RC522_SS, PIN_RC522_RST);
 LiquidCrystal_I2C lcd(LCD_ADDR, LCD_COLS, LCD_ROWS);
@@ -46,17 +46,19 @@ enum State {
   REGISTRO,     // Leyendo UIDs; botón corto -> LISTO
   LISTO         // Botón corto -> JUGAR
 };
+
 State estado = IDLE;
 
+struct TagUID {
+  uint8_t bytes[10];
+  uint8_t length;
+  bool activo;
+};
+
 TagUID jugadores[MAX_PLAYERS];
+
 int numJugadores = 0;   // N actual (registrados)
 long currentPos = 0;    // posición relativa del stepper en pasos
-
-struct TagUID {
-  byte bytes[10];   
-  byte length;      // tamañodel UID
-  bool activo;      // para modo reducción
-};
 
 unsigned long lastButtonChange = 0;
 bool lastButtonLevel = HIGH; // INPUT_PULLUP: reposo = HIGH
@@ -146,7 +148,6 @@ void beep(unsigned int freq, unsigned long ms) {
 }
 
 void playWinnerJingle() {
-  // Jingle corto y alegre (C-E-G-C')
   beep(523, 120);
   delay(30);
   beep(659, 120);
@@ -232,7 +233,7 @@ void updateLED() {
       digitalWrite(PIN_LED, ledOn ? HIGH : LOW);
     }
   } else if (estado == LISTO) {
-    // En LISTO LED apagado; encenderemos fijo al girar
+    // En LISTO LED apagado; se enciende fijo al girar
     // (gestiona jugarRonda()).
   } else {
     digitalWrite(PIN_LED, LOW);
@@ -292,7 +293,7 @@ void spinToWinner(int idxGanador) {
   // objetivo absoluto respecto a 0..STEPS_PER_REV-1
   long targetInRev = (baseTarget + jitter) % STEPS_PER_REV;
 
-  // Paso 1: una vuelta completa para show
+  // Paso 1: una vuelta completa para generar suspenso jsdkj
   tone(PIN_BUZZER, 550);         // sonido continuo mientras gira
   digitalWrite(PIN_LED, HIGH);   // LED fijo en juego
   stepRelative(STEPS_PER_REV);
@@ -330,7 +331,7 @@ void jugarRonda() {
   lcd.clear();
   lcd.setCursor(0, 0);
   lcd.print("Ganador: J");
-  // Número humano (1..N) según orden de registro
+  // Número (1..N) según orden de registro
   lcd.print(idx + 1);
   lcd.setCursor(0, 1);
   lcd.print("UID ");
@@ -444,6 +445,4 @@ void loop() {
       }
     }
   }
-
-
 }
