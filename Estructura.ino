@@ -20,7 +20,7 @@
 #define STEPS_PER_REV 2048
 
 Stepper stepperMotor(STEPS_PER_REV, 2, 4, 3, 5);
-#define STEPPER_RPM 12         //  (5–15)
+#define STEPPER_RPM 10         //  (5–15)
 
 // Juego
 #define MAX_PLAYERS 8     
@@ -193,6 +193,7 @@ void readButton() {
             lcdCenterPrint(0, "REGISTRO");
             lcd.setCursor(0, 1);
             lcd.print("Pase tarjeta...");
+            rfid.PCD_AntennaOn();
           } else if (estado == REGISTRO) {
             if (numJugadores >= 2) {
               estado = LISTO;
@@ -201,6 +202,7 @@ void readButton() {
               lcd.setCursor(0, 1);
               lcd.print("N = ");
               lcd.print(numJugadores);
+              rfid.PCD_AntennaOff();
               lcd.print(GAME_MODE == MODO_CONSTANTE ? " Const" : " Red");
               digitalWrite(PIN_LED, LOW); // LED fijo solo al jugar
             } else {
@@ -294,7 +296,7 @@ void spinToWinner(int idxGanador) {
   long targetInRev = (baseTarget + jitter) % STEPS_PER_REV;
 
   // Paso 1: una vuelta completa para generar suspenso jsdkj
-  tone(PIN_BUZZER, 550);         // sonido continuo mientras gira
+  tone(PIN_BUZZER, 200);         // sonido continuo mientras gira
   digitalWrite(PIN_LED, HIGH);   // LED fijo en juego
   stepRelative(STEPS_PER_REV);
 
